@@ -13,6 +13,11 @@
 int main(void)
 {
     int kvm, vmfd, vcpufd, ret;
+
+    // 下面这段是img.S编译后的结果，
+    // 这样直接加载字节码就不需要再从文件加载了
+    // img.S 编译步骤详见Makefile
+    // img.S以及img.bin在demo里面木有用到
     const uint8_t code[] = {
         0xba, 0xf8, 0x03, /* mov $0x3f8, %dx */
         0x00, 0xd8,       /* add %bl, %al */
@@ -121,8 +126,10 @@ int main(void)
         // 因为虚拟机的内存宿主机能够直接读取到，所以直接在宿主机上获取到
         // 虚拟机的输出（out指令），这也是后面PCI设备虚拟化的一个基础，DMA模式的PCI设备
         case KVM_EXIT_IO:
-            if (run->io.direction == KVM_EXIT_IO_OUT && run->io.size == 1 && run->io.port == 0x3f8 && run->io.count == 1)
+            if (run->io.direction == KVM_EXIT_IO_OUT && run->io.size == 1 && run->io.port == 0x3f8 && run->io.count == 1) {
                 putchar(*(((char *)run) + run->io.data_offset));
+                putchar('S');
+	    }
             else
                 errx(1, "unhandled KVM_EXIT_IO");
             break;
